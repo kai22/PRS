@@ -1,0 +1,30 @@
+# Specify filepatterns you want git to ignore.
+
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+local.properties
+.settings/
+.loadpath
+
+
+# STS (Spring Tool Suite)
+.springBeans
+
+# Hide node_modules folder and zipped folders
+bower_components
+node_modules
+*.zip
+.idea
+/dist
+.sass-cache
+*.log
+
+#mac
+.DS_Store
+/.sass-cache/
+phoenixpublic.sublime-project
+phoenixpublic.sublime-workspace
