@@ -1,4 +1,5 @@
 import "./stylesheets/main.css";
+import "./stylesheets/bootstrap.min.css";
 
 // ----------------------------------------------------------------------------
 
@@ -11,7 +12,7 @@ import env from "env";
 const app = remote.app;
 const appDir = jetpack.cwd(app.getAppPath());
 const Vue = require('vue/dist/vue.min.js');
-
+const R = require('ramda/dist/ramda.min.js');
 
 // import 
 // use an alias for my stuff
@@ -32,6 +33,46 @@ const main_dump = appDir.read("main_dump.json", "json");
 
 
 //setup Vue :: controls the front-end
+
+let vtemplates = {
+
+  block: /* syntax:html */`
+
+  	<div>
+  		<div>
+
+  			<slot></slot>
+
+  		</div>
+  	</div>`,
+
+ }
+
+let vueComps = [
+
+      {
+        "name":'block-wrap',
+        "props":[''],
+        "html":'block'
+      }
+ ]
+
+
+function vComp(arr){
+
+    R.forEach(function(n){
+      
+      var y = R.filter(function(x){ return x.name == n}, vueComps)[0];
+
+      Vue.component(y.name, {
+        props:y.props,
+        template:vtemplates[y.html],
+      });
+
+    }, arr);
+};
+
+
 
 global.atom = new Vue({
 
