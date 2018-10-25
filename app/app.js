@@ -705,209 +705,58 @@ module.exports = function (css) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _stylesheets_main_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./stylesheets/main.css */ "./src/stylesheets/main.css");
 /* harmony import */ var _stylesheets_main_css__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_stylesheets_main_css__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _helpers_context_menu_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers/context_menu.js */ "./src/helpers/context_menu.js");
-/* harmony import */ var _helpers_external_links_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./helpers/external_links.js */ "./src/helpers/external_links.js");
-/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! electron */ "electron");
-/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(electron__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var fs_jetpack__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! fs-jetpack */ "fs-jetpack");
-/* harmony import */ var fs_jetpack__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(fs_jetpack__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var _hello_world_hello_world__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./hello_world/hello_world */ "./src/hello_world/hello_world.js");
-/* harmony import */ var env__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! env */ "./config/env_development.json");
-var env__WEBPACK_IMPORTED_MODULE_6___namespace = /*#__PURE__*/__webpack_require__.t(/*! env */ "./config/env_development.json", 1);
- // Small helpers you might want to keep
-
-
+/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! electron */ "electron");
+/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(electron__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var fs_jetpack__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! fs-jetpack */ "fs-jetpack");
+/* harmony import */ var fs_jetpack__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(fs_jetpack__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var env__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! env */ "./config/env_development.json");
+var env__WEBPACK_IMPORTED_MODULE_3___namespace = /*#__PURE__*/__webpack_require__.t(/*! env */ "./config/env_development.json", 1);
  // ----------------------------------------------------------------------------
-// Everything below is just to show you how it works. You can delete all of it.
 // ----------------------------------------------------------------------------
 
 
 
 
-const Vue = __webpack_require__(/*! vue/dist/vue.min.js */ "vue/dist/vue.min.js");
+const app = electron__WEBPACK_IMPORTED_MODULE_1__["remote"].app;
+const appDir = fs_jetpack__WEBPACK_IMPORTED_MODULE_2___default.a.cwd(app.getAppPath());
 
-
-
-const app = electron__WEBPACK_IMPORTED_MODULE_3__["remote"].app;
-const appDir = fs_jetpack__WEBPACK_IMPORTED_MODULE_4___default.a.cwd(app.getAppPath()); // import 
+const Vue = __webpack_require__(/*! vue/dist/vue.min.js */ "vue/dist/vue.min.js"); // import 
 // use an alias for my stuff
 // import * as prs from "./prs/prs"
 //sweet... so let's load the external JSON and data so 
 //we can pass it around to the pure functions
-//setup neDB so we can ditch the excell sheets 
+
+
+const database = appDir.read("database.json", "json");
+const main_dump = appDir.read("main_dump.json", "json"); //setup neDB so we can ditch the excell sheets 
 //setup Vue :: controls the front-end
 
-let atom = new Vue({
+global.atom = new Vue({
   el: "#app",
-  data: {},
-  created: function () {
-    console.log('YO!');
+  data: {
+    raw: [],
+    main: '',
+    edits: [],
+    screens: {
+      'title': 'title-screen',
+      'runjob': 'job-screen',
+      'results': 'result-screen',
+      'editor': 'edit-screen'
+    }
   },
-  mounted: function () {}
-});
-/* 
-//Holy crap! This is browser window with HTML and stuff, 
-//but I can read files from disk like it's node.js! 
-//Welcome to Electron world :) 
+  created: function () {
+    console.log('YO!'); //console.log(database);
 
-const manifest = appDir.read("package.json", "json");
-
-
-const osMap = {
-  win32: "Windows",
-  darwin: "macOS",
-  linux: "Linux"
-};
-
-document.querySelector("#app").style.display = "block";
-document.querySelector("#greet").innerHTML = greet();
-document.querySelector("#os").innerHTML = osMap[process.platform];
-document.querySelector("#author").innerHTML = manifest.author;
-document.querySelector("#env").innerHTML = env.name;
-document.querySelector("#electron-version").innerHTML =
-  process.versions.electron;
-
-
-*/
-
-/***/ }),
-
-/***/ "./src/hello_world/hello_world.js":
-/*!****************************************!*\
-  !*** ./src/hello_world/hello_world.js ***!
-  \****************************************/
-/*! exports provided: greet, bye */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "greet", function() { return greet; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bye", function() { return bye; });
-const greet = () => {
-  return "Hello World!";
-};
-const bye = () => {
-  return "See ya!";
-};
-
-/***/ }),
-
-/***/ "./src/helpers/context_menu.js":
-/*!*************************************!*\
-  !*** ./src/helpers/context_menu.js ***!
-  \*************************************/
-/*! no exports provided */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! electron */ "electron");
-/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(electron__WEBPACK_IMPORTED_MODULE_0__);
-// This gives you default context menu (cut, copy, paste)
-// in all input fields and textareas across your app.
-
-const Menu = electron__WEBPACK_IMPORTED_MODULE_0__["remote"].Menu;
-const MenuItem = electron__WEBPACK_IMPORTED_MODULE_0__["remote"].MenuItem;
-
-const isAnyTextSelected = () => {
-  return window.getSelection().toString() !== "";
-};
-
-const cut = new MenuItem({
-  label: "Cut",
-  click: () => {
-    document.execCommand("cut");
-  }
-});
-const copy = new MenuItem({
-  label: "Copy",
-  click: () => {
-    document.execCommand("copy");
-  }
-});
-const paste = new MenuItem({
-  label: "Paste",
-  click: () => {
-    document.execCommand("paste");
-  }
-});
-const normalMenu = new Menu();
-normalMenu.append(copy);
-const textEditingMenu = new Menu();
-textEditingMenu.append(cut);
-textEditingMenu.append(copy);
-textEditingMenu.append(paste);
-document.addEventListener("contextmenu", event => {
-  switch (event.target.nodeName) {
-    case "TEXTAREA":
-    case "INPUT":
-      event.preventDefault();
-      textEditingMenu.popup(electron__WEBPACK_IMPORTED_MODULE_0__["remote"].getCurrentWindow());
-      break;
-
-    default:
-      if (isAnyTextSelected()) {
-        event.preventDefault();
-        normalMenu.popup(electron__WEBPACK_IMPORTED_MODULE_0__["remote"].getCurrentWindow());
-      }
-
-  }
-}, false);
-
-/***/ }),
-
-/***/ "./src/helpers/external_links.js":
-/*!***************************************!*\
-  !*** ./src/helpers/external_links.js ***!
-  \***************************************/
-/*! no exports provided */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! electron */ "electron");
-/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(electron__WEBPACK_IMPORTED_MODULE_0__);
-// Convenient way for opening links in external browser, not in the app.
-// Useful especially if you have a lot of links to deal with.
-//
-// Usage:
-//
-// Every link with class ".js-external-link" will be opened in external browser.
-// <a class="js-external-link" href="http://google.com">google</a>
-//
-// The same behaviour for many links can be achieved by adding
-// this class to any parent tag of an anchor tag.
-// <p class="js-external-link">
-//    <a href="http://google.com">google</a>
-//    <a href="http://bing.com">bing</a>
-// </p>
-
-
-const supportExternalLinks = event => {
-  let href;
-  let isExternal = false;
-
-  const checkDomElement = element => {
-    if (element.nodeName === "A") {
-      href = element.getAttribute("href");
+    this.$set(this, 'main', database);
+  },
+  mounted: function () {},
+  methods: {
+    getProduct: function (id) {//R.find in main
+    },
+    getProductFromRaw: function () {//R.find in raw
     }
-
-    if (element.classList.contains("js-external-link")) {
-      isExternal = true;
-    }
-
-    if (href && isExternal) {
-      electron__WEBPACK_IMPORTED_MODULE_0__["shell"].openExternal(href);
-      event.preventDefault();
-    } else if (element.parentElement) {
-      checkDomElement(element.parentElement);
-    }
-  };
-
-  checkDomElement(event.target);
-};
-
-document.addEventListener("click", supportExternalLinks, false);
+  }
+});
 
 /***/ }),
 

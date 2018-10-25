@@ -112,11 +112,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var url__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(url__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! electron */ "electron");
 /* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(electron__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _menu_dev_menu_template__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./menu/dev_menu_template */ "./src/menu/dev_menu_template.js");
-/* harmony import */ var _menu_edit_menu_template__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./menu/edit_menu_template */ "./src/menu/edit_menu_template.js");
-/* harmony import */ var _helpers_window__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./helpers/window */ "./src/helpers/window.js");
-/* harmony import */ var env__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! env */ "./config/env_development.json");
-var env__WEBPACK_IMPORTED_MODULE_6___namespace = /*#__PURE__*/__webpack_require__.t(/*! env */ "./config/env_development.json", 1);
+/* harmony import */ var _helpers_window__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./helpers/window */ "./src/helpers/window.js");
+/* harmony import */ var env__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! env */ "./config/env_development.json");
+var env__WEBPACK_IMPORTED_MODULE_4___namespace = /*#__PURE__*/__webpack_require__.t(/*! env */ "./config/env_development.json", 1);
 // This is main process of Electron, started as first thing when your
 // app starts. It runs through entire life of your application.
 // It doesn't have any windows which you can see on screen, but we can open
@@ -124,34 +122,20 @@ var env__WEBPACK_IMPORTED_MODULE_6___namespace = /*#__PURE__*/__webpack_require_
 
 
 
-
-
  // Special module holding environment variables which you declared
 // in config/env_xxx.json file.
 
-
-
-const setApplicationMenu = () => {
-  const menus = [_menu_edit_menu_template__WEBPACK_IMPORTED_MODULE_4__["editMenuTemplate"]];
-
-  if (env__WEBPACK_IMPORTED_MODULE_6__.name !== "production") {
-    menus.push(_menu_dev_menu_template__WEBPACK_IMPORTED_MODULE_3__["devMenuTemplate"]);
-  }
-
-  electron__WEBPACK_IMPORTED_MODULE_2__["Menu"].setApplicationMenu(electron__WEBPACK_IMPORTED_MODULE_2__["Menu"].buildFromTemplate(menus));
-}; // Save userData in separate folders for each environment.
+ // Save userData in separate folders for each environment.
 // Thanks to this you can use production and development versions of the app
 // on same machine like those are two separate apps.
 
-
-if (env__WEBPACK_IMPORTED_MODULE_6__.name !== "production") {
+if (env__WEBPACK_IMPORTED_MODULE_4__.name !== "production") {
   const userDataPath = electron__WEBPACK_IMPORTED_MODULE_2__["app"].getPath("userData");
-  electron__WEBPACK_IMPORTED_MODULE_2__["app"].setPath("userData", `${userDataPath} (${env__WEBPACK_IMPORTED_MODULE_6__.name})`);
+  electron__WEBPACK_IMPORTED_MODULE_2__["app"].setPath("userData", `${userDataPath} (${env__WEBPACK_IMPORTED_MODULE_4__.name})`);
 }
 
 electron__WEBPACK_IMPORTED_MODULE_2__["app"].on("ready", () => {
-  setApplicationMenu();
-  const mainWindow = Object(_helpers_window__WEBPACK_IMPORTED_MODULE_5__["default"])("main", {
+  const mainWindow = Object(_helpers_window__WEBPACK_IMPORTED_MODULE_3__["default"])("main", {
     width: 1000,
     height: 600
   });
@@ -161,9 +145,18 @@ electron__WEBPACK_IMPORTED_MODULE_2__["app"].on("ready", () => {
     slashes: true
   }));
 
-  if (env__WEBPACK_IMPORTED_MODULE_6__.name === "development") {
+  if (env__WEBPACK_IMPORTED_MODULE_4__.name === "development") {
     mainWindow.openDevTools();
   }
+
+  electron__WEBPACK_IMPORTED_MODULE_2__["globalShortcut"].register('f5', function () {
+    console.log('f5 is pressed');
+    mainWindow.reload();
+  });
+  electron__WEBPACK_IMPORTED_MODULE_2__["globalShortcut"].register('CommandOrControl+R', function () {
+    console.log('CommandOrControl+R is pressed');
+    mainWindow.reload();
+  });
 });
 electron__WEBPACK_IMPORTED_MODULE_2__["app"].on("window-all-closed", () => {
   electron__WEBPACK_IMPORTED_MODULE_2__["app"].quit();
@@ -264,87 +257,6 @@ __webpack_require__.r(__webpack_exports__);
   win.on("close", saveState);
   return win;
 });
-
-/***/ }),
-
-/***/ "./src/menu/dev_menu_template.js":
-/*!***************************************!*\
-  !*** ./src/menu/dev_menu_template.js ***!
-  \***************************************/
-/*! exports provided: devMenuTemplate */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "devMenuTemplate", function() { return devMenuTemplate; });
-/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! electron */ "electron");
-/* harmony import */ var electron__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(electron__WEBPACK_IMPORTED_MODULE_0__);
-
-const devMenuTemplate = {
-  label: "Development",
-  submenu: [{
-    label: "Reload",
-    accelerator: "CmdOrCtrl+R",
-    click: () => {
-      electron__WEBPACK_IMPORTED_MODULE_0__["BrowserWindow"].getFocusedWindow().webContents.reloadIgnoringCache();
-    }
-  }, {
-    label: "Toggle DevTools",
-    accelerator: "Alt+CmdOrCtrl+I",
-    click: () => {
-      electron__WEBPACK_IMPORTED_MODULE_0__["BrowserWindow"].getFocusedWindow().toggleDevTools();
-    }
-  }, {
-    label: "Quit",
-    accelerator: "CmdOrCtrl+Q",
-    click: () => {
-      electron__WEBPACK_IMPORTED_MODULE_0__["app"].quit();
-    }
-  }]
-};
-
-/***/ }),
-
-/***/ "./src/menu/edit_menu_template.js":
-/*!****************************************!*\
-  !*** ./src/menu/edit_menu_template.js ***!
-  \****************************************/
-/*! exports provided: editMenuTemplate */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "editMenuTemplate", function() { return editMenuTemplate; });
-const editMenuTemplate = {
-  label: "Edit",
-  submenu: [{
-    label: "Undo",
-    accelerator: "CmdOrCtrl+Z",
-    selector: "undo:"
-  }, {
-    label: "Redo",
-    accelerator: "Shift+CmdOrCtrl+Z",
-    selector: "redo:"
-  }, {
-    type: "separator"
-  }, {
-    label: "Cut",
-    accelerator: "CmdOrCtrl+X",
-    selector: "cut:"
-  }, {
-    label: "Copy",
-    accelerator: "CmdOrCtrl+C",
-    selector: "copy:"
-  }, {
-    label: "Paste",
-    accelerator: "CmdOrCtrl+V",
-    selector: "paste:"
-  }, {
-    label: "Select All",
-    accelerator: "CmdOrCtrl+A",
-    selector: "selectAll:"
-  }]
-};
 
 /***/ }),
 

@@ -1,12 +1,12 @@
 {
-  "name": "electron-boilerplate",
-  "productName": "Electron Boilerplate",
-  "description": "Starter for your Electron application",
+  "name": "PRS",
+  "productName": "PRS",
+  "description": "Product Report System for Beauty Enterprises",
   "version": "0.0.0",
   "private": true,
-  "author": "Mr. Gumby <mr.gumby@example.com>",
-  "copyright": "© 2017, Gumby inc.",
-  "homepage": "http://example.com",
+  "author": "Laurence Willis <laurence.e.willis@gmail.com>",
+  "copyright": "©2018 Beauty Enterprises Inc.",
+  "homepage": "",
   "main": "app/background.js",
   "build": {
     "appId": "com.example.electron-boilerplate",

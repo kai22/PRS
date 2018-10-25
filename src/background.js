@@ -5,22 +5,15 @@
 
 import path from "path";
 import url from "url";
-import { app, Menu } from "electron";
-import { devMenuTemplate } from "./menu/dev_menu_template";
-import { editMenuTemplate } from "./menu/edit_menu_template";
+import { app, Menu, globalShortcut } from "electron";
 import createWindow from "./helpers/window";
 
 // Special module holding environment variables which you declared
 // in config/env_xxx.json file.
+
 import env from "env";
 
-const setApplicationMenu = () => {
-  const menus = [editMenuTemplate];
-  if (env.name !== "production") {
-    menus.push(devMenuTemplate);
-  }
-  Menu.setApplicationMenu(Menu.buildFromTemplate(menus));
-};
+
 
 // Save userData in separate folders for each environment.
 // Thanks to this you can use production and development versions of the app
@@ -31,7 +24,7 @@ if (env.name !== "production") {
 }
 
 app.on("ready", () => {
-  setApplicationMenu();
+
 
   const mainWindow = createWindow("main", {
     width: 1000,
@@ -49,6 +42,16 @@ app.on("ready", () => {
   if (env.name === "development") {
     mainWindow.openDevTools();
   }
+
+  globalShortcut.register('f5', function() {
+    console.log('f5 is pressed')
+    mainWindow.reload()
+  })
+  globalShortcut.register('CommandOrControl+R', function() {
+    console.log('CommandOrControl+R is pressed')
+    mainWindow.reload()
+  })
+  
 });
 
 app.on("window-all-closed", () => {

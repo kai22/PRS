@@ -1,6 +1,5 @@
 import "./stylesheets/main.css";
 
-
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
@@ -24,26 +23,25 @@ const Vue = require('vue/dist/vue.min.js');
 //sweet... so let's load the external JSON and data so 
 //we can pass it around to the pure functions
 
-
-
+const database = appDir.read("database.json", "json");
+const main_dump = appDir.read("main_dump.json", "json");
 
 //setup neDB so we can ditch the excell sheets 
 
 
 
 
-
 //setup Vue :: controls the front-end
 
-let atom = new Vue({
+global.atom = new Vue({
 
 	el:"#app",
 
 	data:{
 
 		raw:[],
-		main:[],
-		edits:[]
+		main:'',
+		edits:[],
 
 		screens:{
 
@@ -58,7 +56,9 @@ let atom = new Vue({
 
 		console.log('YO!');
 
+		//console.log(database);
 
+		this.$set(this,'main', database);
 
 	},
 
