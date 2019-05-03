@@ -21,9 +21,6 @@ const csv = require('csv-parser')
 // import * as prs from "./prs/prs"
 
 
-
-
-
 const database = 'data/database.csv'; //appDir.read("database.json", "json");
 const main_dump = 'data/main_dump.csv'; //appDir.read("main_dump.json", "json");
 const monthly = 'data/Sept2018.csv';
@@ -35,19 +32,6 @@ const monthly = 'data/Sept2018.csv';
 
 
 let vtemplates = {
-	resize:`
-		<div>
-			<h1 style="line-height:36px">Convert Jpegs for e-mail</h1>
-
-			<i>Type in the beauty sku #'s below separated by commas. Put a space after each comma</i><br>
-
-			<font color="red" size="2"><b>Dont use hard returns, Don't end the line with a comma.</b></font>
-			<br>
-			<textarea name="skus" rows="10" cols="50" wrap="soft" v-bind="$root.jobOptions.imageList"> </textarea>
-			<br>
-			<button onclick="$root.resize()">Convert</button>
-		</div>`,
-
 	job:`
 		<div>
 			<strong>Name of Input File:</strong>
@@ -83,8 +67,7 @@ let vtemplates = {
 			<br>
 			<job-section></job-section>
 			<br>
-			<resize-section></resize-section>
-			<br><br><br><br>
+			
 
 			<div v-html="JSON.stringify(atom.parseMonthly)"></div>
 		</div>`,
@@ -111,34 +94,28 @@ let vtemplates = {
 let vueComps = [
 
 	{
-        "name":'job-section',
-        "props":[],
-        "html":'job'
-    },
+			"name":'job-section',
+			"props":[],
+			"html":'job'
+  },
 
 	{
-        "name":'resize-section',
-        "props":[],
-        "html":'resize'
-    },
+			"name":'job-screen',
+			"props":[],
+			"html":'jobcomp'
+  },
+  {
+			"name":'error-msgs',
+			"props":[],
+			"html":'errors'
+  },
 
-	{
-        "name":'job-screen',
-        "props":[],
-        "html":'jobcomp'
-    },
-    {
-        "name":'error-msgs',
-        "props":[],
-        "html":'errors'
-    },
-
-    {
-        "name":'block-wrap',
-        "props":[],
-        "html":'block'
-    }
- ]
+  {
+			"name":'block-wrap',
+			"props":[],
+			"html":'block'
+  }
+]
 
 
 function vComp(arr){
@@ -158,7 +135,6 @@ function vComp(arr){
 vComp([
 
       "job-section",
-      "resize-section",
       "job-screen",
       "error-msgs",
       "block-wrap"
@@ -221,6 +197,8 @@ global.atom = new Vue({
 
 		vm.$set(vm,'comp',vm.screens['runjob']);
 
+		console.log(app.getAppPath());
+
 	},
 	computed:{
 
@@ -245,7 +223,6 @@ global.atom = new Vue({
 		convertCSV:function(file){
 
 			var vm = this;
-
 			var result = [];
 
 			appDir.createReadStream(file)

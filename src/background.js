@@ -47,6 +47,12 @@ app.on("ready", () => {
     console.log('f5 is pressed')
     mainWindow.reload()
   })
+
+  globalShortcut.register('f6', function() {
+    console.log('f6 is pressed')
+    mainWindow.toggleDevTools();
+  })
+
   globalShortcut.register('CommandOrControl+R', function() {
     console.log('CommandOrControl+R is pressed')
     mainWindow.reload()
