@@ -9,11 +9,12 @@ import { remote } from "electron";
 import jetpack from "fs-jetpack";
 import env from "env";
 
+const path = require('path');
 const app = remote.app;
-const appDir = jetpack.cwd(app.getAppPath());
+
+
 const Vue = require('vue/dist/vue.min.js');
 const R = require('ramda/dist/ramda.min.js');
-
 const csv = require('csv-parser')
 
 // import 
@@ -21,9 +22,20 @@ const csv = require('csv-parser')
 // import * as prs from "./prs/prs"
 
 
-const database = 'data/database.csv'; //appDir.read("database.json", "json");
-const main_dump = 'data/main_dump.csv'; //appDir.read("main_dump.json", "json");
-const monthly = 'data/Sept2018.csv';
+let desktopPath = path.join(app.getAppPath(), '../../../../../../Desktop');
+
+if(jetpack.exists(desktopPath) == false){
+	
+	 desktopPath = path.join(app.getAppPath(), '../../');
+}
+
+const appDir = jetpack.cwd(path.join(desktopPath, 'PRS')); 
+const preferences = appDir.read('prefs.json','json');
+
+const database = preferences.database;
+const main_dump = preferences.dump;
+const monthlyFolder = preferences.monthly;
+const imagesDir = preferences.images;
 
 
 //setup neDB so we can ditch the excel sheets 
@@ -35,7 +47,14 @@ let vtemplates = {
 	job:`
 		<div>
 			<strong>Name of Input File:</strong>
-			<input type="text" name="filename" maxlength="15" size="15" v-model="$root.jobOptions.filename">
+			<!-- input type="text" name="filename" maxlength="15" size="15" v-model="$root.jobOptions.filename" -->
+
+			<select name="filename" v-model="$root.jobOptions.filename" style="width:150px">
+				<option v-for="(opt,index) in $root.mlist">
+					{{opt}}
+				</option>
+
+			</select>
 
 			<br><br>
 
@@ -55,10 +74,10 @@ let vtemplates = {
 
 			<br>
 		
-			<input type="checkbox" name="write" value='1' v-model="$root.jobOptions.writeCSV"> <b>Write output CSV file </b><br><i>(formated for Quark)</i>
+			<input type="checkbox" name="write" value='1' v-model="$root.jobOptions.writeCSV"> <b>Write output CSV file </b><br><i>(formated for Indesign)</i>
 
 			<br><br>
-			<button onclick="$root.submitJob()">Do It!</button>
+			<button @click="$root.submitJob()">Do It!</button>
 		</div>`,
 
 	jobcomp:`
@@ -67,9 +86,22 @@ let vtemplates = {
 			<br>
 			<job-section></job-section>
 			<br>
-			
+		</div>`,
 
-			<div v-html="JSON.stringify(atom.parseMonthly)"></div>
+	results:`
+		<div>
+			Results
+			<br>
+			<!-- div v-html="JSON.stringify($root.parseMonthly)"></div -->
+			<div style="width:175px;height:175px;border:1px solid #000000;font-size:12px;float:left;margin-right:5px" v-for="(box,index) in $root.parseMonthly">
+				{{box.bsku}}</br>
+				{{box.manufac}}</br>
+				{{box.name}}</br>
+				{{box.price}}</br>
+				<img v-bind:src="$root.getPhotoDir(box.photo)" width="35%" height="35%" align="absmiddle" />
+
+			</div>
+		
 		</div>`,
 
 	errors:`
@@ -103,7 +135,12 @@ let vueComps = [
 			"name":'job-screen',
 			"props":[],
 			"html":'jobcomp'
-  },
+	},
+	{
+			"name":'result-screen',
+			"props":[],
+			"html":'results'
+	},
   {
 			"name":'error-msgs',
 			"props":[],
@@ -137,10 +174,9 @@ vComp([
       "job-section",
       "job-screen",
       "error-msgs",
-      "block-wrap"
+			"block-wrap",
+			"result-screen"
     ]);
-
-
 
 
 //setup Vue :: controls the front-end
@@ -153,6 +189,8 @@ global.atom = new Vue({
 
 		database:[],
 		maindump:[],
+		rawProds:[],
+		mlist:[],
 		monthly:[],
 		result:[],
 
@@ -187,7 +225,10 @@ global.atom = new Vue({
 
 		vm.$set(vm,'maindump', vm.convertCSV(main_dump));
 		vm.$set(vm,'database', vm.convertCSV(database));
-		vm.$set(vm,'monthly', vm.convertCSV(monthly));
+
+		let mf = appDir.list(appDir.path(monthlyFolder));
+
+		vm.$set(vm, 'mlist', mf);
 
 	},
 
@@ -197,28 +238,47 @@ global.atom = new Vue({
 
 		vm.$set(vm,'comp',vm.screens['runjob']);
 
-		console.log(app.getAppPath());
-
+		console.log(desktopPath);
+	
 	},
 	computed:{
 
 		parseMonthly: function(){
 
-			var vm = this;
+			let vm = this;
 
 			return R.map(function(n){
 
-				n.product_ids = n.product_ids.split(',');
-				n.bonus = n.bonus ? `${n.bonus}_icon.jpg` : '';
+				let x = vm.getProduct(n.product_ids[0], vm.database);
+				let o = vm.makeProduct(x, n);
 
-				return n;
+				if(o.manufac.match(/not found/g) !== null){
+
+						vm.rawProds.push(vm.getProduct(n.product_ids[0], vm.maindump));
+				}
+
+				//console.log(o);
+
+				return o;
 
 			}, vm.monthly);
-
 		},
 	},
 
 	methods:{
+
+		getPhotoDir: function(p){
+
+				if(jetpack.exists(imagesDir+p)){
+
+					return path.join(appDir.path('images'), 'checkmark.jpg');
+
+				} else {
+
+					return path.join(appDir.path('images'), 'no_image.jpg');
+				}
+		
+	  },
 
 		convertCSV:function(file){
 
@@ -228,52 +288,139 @@ global.atom = new Vue({
 			appDir.createReadStream(file)
 			  .pipe(csv())
 			  .on('data', (data) => result.push(data))
-			  .on('end', () => {
-
-			    //console.log(result);
-			    
-			  });
-
+			 
 			  return result;
 		},
 
 		submitJob:function(){
 
-			var vm = this;
+			let vm = this;
 
-			if(vm.jobOptions.filename && vm.jobOptions.code && vm.jobOptions.display && vm.jobOptions.writeCSV){
+			if(vm.jobOptions.filename && vm.jobOptions.code && vm.jobOptions.display){ // && vm.jobOptions.writeCSV){
 
-				vm.comp = vm.screens['results'];
+				let monthly = [];
+				
+				appDir.createReadStream((path.join(appDir.path(monthlyFolder), vm.jobOptions.filename)))
+							.pipe(csv())
+							.on('data', (data) => monthly.push(data))
+							.on('end', () => {
 
-				//vm.$set(vm,'monthly', vm.convertCSV(monthly));
+								monthly =	R.map(function(n){
+
+									n.product_ids = n.product_ids.split(',');
+									n.bonus = n.bonus ? `${n.bonus}_icon.jpg` : '';
+									return n;
+
+								}, monthly);
+
+								vm.$set(vm,'monthly', monthly);
+								vm.comp = vm.screens['results'];
+
+							});
 
 			} else {
-
 
 
 			}
 
 		},
 
+		makeProduct: function(n,item){
+
+			let vm = this;
+			let num = Array.isArray(item.product_ids) ? item.product_ids.length : 1;
+			let prodID = num > 1 ? item.product_ids[0] : item.product_ids;
+
+			let obj = {
+				"alpha":item.alpha,
+				"bsku":n ? n.Bsku : prodID,
+				"photo":`${n.Bsku}.jpg`,
+				"manufac":n ? n.Manufac : `Product ${prodID} not found`,
+				"flavor":n ? n.Flavor : '',
+				"name":n ? n.Name : '',
+				"size":n ? n.Size : '',
+				"bonus":item.bonus ? `${item.bonus}_icon.jpg` : '',
+				"note": n ? `Minimum ${n.Minimum} pcs<\\#13>` : '',
+				"cpDesc": num > 1 ? `${num} children` : 'Single Product',
+				"price":item.price,
+				"each":"<\\#13>each",
+				"code": vm.jobOptions.code,
+				"children":""
+			}
+
+			switch (obj.manufac.trim()) {
+        
+        case 'Motions Professional':
+            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+            break;
+        case 'ApHogee':
+            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+            break;
+        case 'Clairol':
+            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+            break;
+        case 'Beautiful Collection':
+            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+            break;
+        case '*Clairol':
+            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+            break;
+        case 'Wella Color Charm':
+            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+            break;
+        case 'Aphogee':
+            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+            break;
+        case '*Aphogee':
+            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+            break;
+        default:
+            obj.manufac = obj.manufac.trim();
+            break;
+    
+    	}
+
+			if(obj.manufac[0] === "*"){
+
+					obj.each = "display<\\#13>($0.00 each)";
+					obj.note = `${obj.note} *Order as 1 unit<\\#13>`;
+					obj.manufac = `${obj.manufac[1]}${obj.manufac}`;
+			}
+
+			let pos = obj.price.search("p");
+
+			//console.log(pos)
+
+			if(pos !== -1){
 		
+				obj.code = "Code BH-P";
+				obj.price = obj.price.substr(0, pos);
+			}
+	
+			return obj;
+
+		},
+
+		makeChildren: function(n){
+
+		},
 
 		resize: function(){
 
 
 		},
 
-		getProduct:function(id){
-
-			//R.find in main
-
-		},
-
-		getProductFromRaw:function(){
-
-			//R.find in raw
-
+		getProduct:function(id, db){
+			return R.find(R.propEq('Bsku', id))(db);
 		}
-
 	}
 
 })
