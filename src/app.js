@@ -12,7 +12,6 @@ import env from "env";
 const path = require('path');
 const app = remote.app;
 
-
 const Vue = require('vue/dist/vue.min.js');
 const R = require('ramda/dist/ramda.min.js');
 const csv = require('csv-parser')
@@ -41,8 +40,6 @@ const imagesDir = preferences.images;
 //setup neDB so we can ditch the excel sheets 
 
 
-
-
 let vtemplates = {
 	job:`
 		<div>
@@ -58,11 +55,12 @@ let vtemplates = {
 
 			<br><br>
 
-			<strong>Code:</strong>
-			<select name="code" v-model="$root.jobOptions.code">
+			<strong>Project Type:</strong>
+			<select name="code" v-model="$root.jobOptions.project">
 				<option selected >Choose one:</option>
-				<option>Code BH</option>
-				<option>Code GD</option>
+				<option>Monthly</option>
+				<option>Price Book</option>
+				<option>Line Drive</option>
 			</select>
 
 			<br><br>
@@ -129,7 +127,7 @@ let vueComps = [
 			"name":'job-section',
 			"props":[],
 			"html":'job'
-  },
+  	},
 
 	{
 			"name":'job-screen',
@@ -141,17 +139,17 @@ let vueComps = [
 			"props":[],
 			"html":'results'
 	},
-  {
+	{
 			"name":'error-msgs',
 			"props":[],
 			"html":'errors'
-  },
+	},
 
-  {
+  	{
 			"name":'block-wrap',
 			"props":[],
 			"html":'block'
-  }
+  	}
 ]
 
 
@@ -174,8 +172,8 @@ vComp([
       "job-section",
       "job-screen",
       "error-msgs",
-			"block-wrap",
-			"result-screen"
+	  "block-wrap",
+	  "result-screen"
     ]);
 
 
@@ -197,7 +195,7 @@ global.atom = new Vue({
 		comp:'',
 		jobOptions:{
 			'filename':'',
-			'code':'',
+			'project':'',
 			'display':'',
 			'writeCSV':'',
 			'imageList':''
@@ -254,10 +252,8 @@ global.atom = new Vue({
 
 				if(o.manufac.match(/not found/g) !== null){
 
-						vm.rawProds.push(vm.getProduct(n.product_ids[0], vm.maindump));
+					vm.rawProds.push(vm.getProduct(n.product_ids[0], vm.maindump));
 				}
-
-				//console.log(o);
 
 				return o;
 
@@ -267,7 +263,7 @@ global.atom = new Vue({
 
 	methods:{
 
-		getPhotoDir: function(p){
+		getPhotoDir:function(p){
 
 				if(jetpack.exists(imagesDir+p)){
 
@@ -278,7 +274,7 @@ global.atom = new Vue({
 					return path.join(appDir.path('images'), 'no_image.jpg');
 				}
 		
-	  },
+	  	},
 
 		convertCSV:function(file){
 
@@ -286,37 +282,66 @@ global.atom = new Vue({
 			var result = [];
 
 			appDir.createReadStream(file)
-			  .pipe(csv())
-			  .on('data', (data) => result.push(data))
-			 
-			  return result;
+				.pipe(csv())
+				.on('data', (data) => result.push(data))
+				
+				return result;
 		},
+
+
+		monthlyJob:function(){
+
+			let vm = this;
+
+			let monthly = [];
+				
+			appDir.createReadStream((path.join(appDir.path(monthlyFolder), vm.jobOptions.filename)))
+				.pipe(csv())
+				.on('data', (data) => monthly.push(data))
+				.on('end', () => {
+
+					monthly = R.map(function(n){
+
+						n.product_ids = n.product_ids.split(',');
+						n.bonus = n.bonus ? `${n.bonus}_icon.jpg` : '';
+						return n;
+
+					}, monthly);
+
+					vm.$set(vm,'monthly', monthly);
+					vm.comp = vm.screens['results'];
+
+				});
+
+		},
+
+		priceBookJob:function(){
+
+
+
+		},
+
+		lineDriveJob:function(){
+
+
+
+		},
+
 
 		submitJob:function(){
 
 			let vm = this;
 
-			if(vm.jobOptions.filename && vm.jobOptions.code && vm.jobOptions.display){ // && vm.jobOptions.writeCSV){
+			let jobs = {
 
-				let monthly = [];
-				
-				appDir.createReadStream((path.join(appDir.path(monthlyFolder), vm.jobOptions.filename)))
-							.pipe(csv())
-							.on('data', (data) => monthly.push(data))
-							.on('end', () => {
+				"Monthly" : "monthlyJob",
+				"Price Book" : "priceBookJob",
+				"Line Drive" : "lineDriveJob"
+			}
 
-								monthly =	R.map(function(n){
+			if(vm.jobOptions.filename && vm.jobOptions.project && vm.jobOptions.display){ // && vm.jobOptions.writeCSV){
 
-									n.product_ids = n.product_ids.split(',');
-									n.bonus = n.bonus ? `${n.bonus}_icon.jpg` : '';
-									return n;
-
-								}, monthly);
-
-								vm.$set(vm,'monthly', monthly);
-								vm.comp = vm.screens['results'];
-
-							});
+				vm[jobs[vm.jobOptions.project]]()
 
 			} else {
 
@@ -350,61 +375,61 @@ global.atom = new Vue({
 
 			switch (obj.manufac.trim()) {
         
-        case 'Motions Professional':
-            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
-            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
-            break;
-        case 'ApHogee':
-            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
-            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
-            break;
-        case 'Clairol':
-            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
-            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
-            break;
-        case 'Beautiful Collection':
-            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
-            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
-            break;
-        case '*Clairol':
-            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
-            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
-            break;
-        case 'Wella Color Charm':
-            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
-            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
-            break;
-        case 'Aphogee':
-            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
-            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
-            break;
-        case '*Aphogee':
-            obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
-            obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
-            break;
-        default:
-            obj.manufac = obj.manufac.trim();
-            break;
+				case 'Motions Professional':
+					obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+					obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+					break;
+				case 'ApHogee':
+					obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+					obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+					break;
+				case 'Clairol':
+					obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+					obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+					break;
+				case 'Beautiful Collection':
+					obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+					obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+					break;
+				case '*Clairol':
+					obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+					obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+					break;
+				case 'Wella Color Charm':
+					obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+					obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+					break;
+				case 'Aphogee':
+					obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+					obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+					break;
+				case '*Aphogee':
+					obj.manufac = `${obj.manufac}<V><f"FuturaStd-Book">1<V>`;
+					obj.note = `${obj.note}<f"FuturaStd-Book">1 B&B Only`;
+					break;
+				default:
+					obj.manufac = obj.manufac.trim();
+					break;
     
-    	}
+    		}
+
 
 			if(obj.manufac[0] === "*"){
 
-					obj.each = "display<\\#13>($0.00 each)";
-					obj.note = `${obj.note} *Order as 1 unit<\\#13>`;
-					obj.manufac = `${obj.manufac[1]}${obj.manufac}`;
+				obj.each = "display<\\#13>($0.00 each)";
+				obj.note = `${obj.note} *Order as 1 unit<\\#13>`;
+				obj.manufac = `${obj.manufac[1]}${obj.manufac}`;
 			}
 
-			let pos = obj.price.search("p");
 
-			//console.log(pos)
+			let pos = obj.price.search("p");
 
 			if(pos !== -1){
 		
 				obj.code = "Code BH-P";
 				obj.price = obj.price.substr(0, pos);
 			}
-	
+
 			return obj;
 
 		},
