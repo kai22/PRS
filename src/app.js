@@ -508,7 +508,6 @@ global.atom = new Vue({
 		saveResults:function(data){
 
 			let csv = parse(data);
-			//console.log(csv);
 			appDir.write('results.csv', csv);
 
 		}
