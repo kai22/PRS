@@ -14,7 +14,8 @@ const app = remote.app;
 
 const Vue = require('vue/dist/vue.min.js');
 const R = require('ramda/dist/ramda.min.js');
-const csv = require('csv-parser')
+const csv = require('csv-parser');
+const { parse } = require('json2csv');
 
 // import 
 // use an alias for my stuff
@@ -72,7 +73,7 @@ let vtemplates = {
 
 			<br>
 		
-			<input type="checkbox" name="write" value='1' v-model="$root.jobOptions.writeCSV"> <b>Write output CSV file </b><br><i>(formated for Indesign)</i>
+			<input type="checkbox" name="write" value='1' v-model="$root.jobOptions.writeCSV"> <b>Write output CSV file </b><br><i>(formated for Indesign soon!)</i>
 
 			<br><br>
 			<button @click="$root.submitJob()">Do It!</button>
@@ -86,26 +87,34 @@ let vtemplates = {
 			<br>
 		</div>`,
 
-	results:`
+	boxResults:`
 		<div>
 			Results
 			<br>
-			<!-- div v-html="JSON.stringify($root.parseMonthly)"></div -->
 			<div style="width:175px;height:175px;border:1px solid #000000;font-size:12px;float:left;margin-right:5px" v-for="(box,index) in $root.parseMonthly">
-				{{box.bsku}}</br>
-				{{box.manufac}}</br>
-				{{box.name}}</br>
-				{{box.price}}</br>
+				{{box.bsku}}<br />
+				{{box.manufac}}<br />
+				{{box.name}}<br />
+				{{box.price}}<br />
+				{{box.cpDesc}}<br />
 				<img v-bind:src="$root.getPhotoDir(box.photo)" width="35%" height="35%" align="absmiddle" />
-
 			</div>
-		
+		</div>`,
+	textResults:`
+		<div>
+			Results
+			<br>
+			<div v-for="(box,index) in $root.parseMonthly">
+				<div style='width:90%;background-color: #ddffdd'><span style='line-height:2'>
+				<b>#{{index}}</b> : {{box.bsku}} <b>{{box.manufac}}</b> - {{box.name}}  <i>-- {{box.cpDesc}}</i></span>
+				</div>
+			</div>
 		</div>`,
 
 	errors:`
 		<div>
 			<div id="noFilename" class="error" style="display:none">Please define the source file.</div>
-			<div id="noCode" class="error" style="display:none">Please define the Code type (Code BH or Code GD).</div>
+			<div id="noCode" class="error" style="display:none">Please define the Project type.</div>
 			<div id="noSource" class="error" style="display:none">The source file does not exist.</div>
 			<div id="noDisplay" class="error" style="display:none">Please choose a display type.</div>
 		</div>`,
@@ -118,6 +127,11 @@ let vtemplates = {
 
 			</div>
 		</div>`,
+
+	text:`
+	
+	`,
+	
  }
 
 
@@ -135,9 +149,14 @@ let vueComps = [
 			"html":'jobcomp'
 	},
 	{
-			"name":'result-screen',
+			"name":'box-results',
 			"props":[],
-			"html":'results'
+			"html":'boxResults'
+	},
+	{
+			"name":'text-results',
+			"props":[],
+			"html":'textResults'
 	},
 	{
 			"name":'error-msgs',
@@ -173,7 +192,8 @@ vComp([
       "job-screen",
       "error-msgs",
 	  "block-wrap",
-	  "result-screen"
+	  "box-results",
+	  "text-results"
     ]);
 
 
@@ -204,7 +224,8 @@ global.atom = new Vue({
 
 			'title':'title-screen',
 			'runjob':'job-screen',
-			'results':'result-screen',
+			'block':'box-results',
+			'text':'text-results',
 			'editor':'edit-screen'
 		},
 
@@ -248,10 +269,9 @@ global.atom = new Vue({
 			return R.map(function(n){
 
 				let x = vm.getProduct(n.product_ids[0], vm.database);
-				let o = vm.makeProduct(x, n);
+				let o = vm.makeMonthlyProduct(x, n);
 
 				if(o.manufac.match(/not found/g) !== null){
-
 					vm.rawProds.push(vm.getProduct(n.product_ids[0], vm.maindump));
 				}
 
@@ -309,7 +329,18 @@ global.atom = new Vue({
 					}, monthly);
 
 					vm.$set(vm,'monthly', monthly);
-					vm.comp = vm.screens['results'];
+
+
+
+
+					vm.comp = vm.screens[vm.jobOptions.display];
+
+
+
+
+					if(vm.jobOptions.writeCSV == true){
+						vm.saveResults(vm.parseMonthly);
+					}
 
 				});
 
@@ -350,7 +381,7 @@ global.atom = new Vue({
 
 		},
 
-		makeProduct: function(n,item){
+		makeMonthlyProduct: function(n,item){
 
 			let vm = this;
 			let num = Array.isArray(item.product_ids) ? item.product_ids.length : 1;
@@ -364,12 +395,12 @@ global.atom = new Vue({
 				"flavor":n ? n.Flavor : '',
 				"name":n ? n.Name : '',
 				"size":n ? n.Size : '',
-				"bonus":item.bonus ? `${item.bonus}_icon.jpg` : '',
+				"bonus":item.bonus ? item.bonus : '',
 				"note": n ? `Minimum ${n.Minimum} pcs<\\#13>` : '',
 				"cpDesc": num > 1 ? `${num} children` : 'Single Product',
 				"price":item.price,
 				"each":"<\\#13>each",
-				"code": vm.jobOptions.code,
+				"code": "Code BH",
 				"children":""
 			}
 
@@ -430,21 +461,56 @@ global.atom = new Vue({
 				obj.price = obj.price.substr(0, pos);
 			}
 
+
+			if(num > 1){ //make the children
+			
+				let c = R.map(function(k){
+
+					var x = vm.getProduct(k, vm.database);
+					var str = '';
+
+					if(x.Manufac){
+						str = `#${x.Bsku} ${x.Flavor ? x.Flavor : x.Name} ${x.Size}`;
+					
+					}else{
+						str = `Product ${k} not found.`;
+
+						vm.rawProds.push(vm.getProduct(k, vm.maindump));
+					}
+
+					return str;
+
+				}, item.product_ids);
+
+				obj.children = R.join('<\#13>', c);
+
+			} else { 
+
+				obj.name = `${obj.name} ${obj.size}`;
+				obj.children = `#${obj.bsku}`;
+
+			}
+
 			return obj;
 
 		},
 
-		makeChildren: function(n){
-
-		},
-
-		resize: function(){
+		makePBProduct:function(){
 
 
 		},
+
 
 		getProduct:function(id, db){
 			return R.find(R.propEq('Bsku', id))(db);
+		},
+
+		saveResults:function(data){
+
+			let csv = parse(data);
+			//console.log(csv);
+			appDir.write('results.csv', csv);
+
 		}
 	}
 
