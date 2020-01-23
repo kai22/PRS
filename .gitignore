@@ -9,6 +9,7 @@ tmp/
 local.properties
 .settings/
 .loadpath
+app/
 
 
 # STS (Spring Tool Suite)
