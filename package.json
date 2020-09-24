@@ -2,10 +2,10 @@
   "name": "PRS",
   "productName": "PRS",
   "description": "Product Report System for Beauty Enterprises",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "author": "Laurence Willis <laurence.e.willis@gmail.com>",
-  "copyright": "©2018 Beauty Enterprises Inc.",
+  "copyright": "©2018-2020 Beauty Enterprises Inc.",
   "homepage": "",
   "main": "app/background.js",
   "build": {
