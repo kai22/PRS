@@ -42,7 +42,7 @@ const imagesDir = preferences.images;
 
 
 let vtemplates = {
-	job:`
+	job:/*html*/`
 		<div>
 			<strong>Name of Input File:</strong>
 			<!-- input type="text" name="filename" maxlength="15" size="15" v-model="$root.jobOptions.filename" -->
@@ -331,11 +331,7 @@ global.atom = new Vue({
 					vm.$set(vm,'monthly', monthly);
 
 
-
-
 					vm.comp = vm.screens[vm.jobOptions.display];
-
-
 
 
 					if(vm.jobOptions.writeCSV == true){
